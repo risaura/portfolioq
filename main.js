@@ -16,152 +16,58 @@ function resizeCanvas() {
         canvas.width = maxWidth;
         canvas.height = maxHeight;
     }
-    
-    // Reposition elements after resize
-    if (character) {
-        character.x = canvas.width / 2;
-        character.y = canvas.height - 150;
-    }
-    
-    // Reposition signs
-    repositionSigns();
 }
 
-function repositionSigns() {
-    if (!signs || signs.length === 0) return;
-    
-    const signSpacing = 170;
-    const totalWidth = signs.length * signSpacing - 20;
-    const startX = (canvas.width - totalWidth) / 2;
-    
-    signs.forEach((sign, index) => {
-        sign.x = startX + (index * signSpacing);
-        sign.y = 50;
-    });
-}
-
-// Set initial canvas size
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-// Initialize scene and character
-const scene = new Scene(canvas);
+// Initialize scrolling scene manager
+window.sceneManager = new SceneManager(canvas);
 const character = new Character(canvas);
-
-// Initialize wooden signs for all sections
-const aboutSign = new WoodenSign(50, 50, "About Me", () => {
-    document.getElementById('aboutModal').style.display = 'block';
-    if (window.achievementSystem) {
-        achievementSystem.trackSectionVisit('about');
-    }
-    if (window.audioManager) {
-        audioManager.play('click');
-    }
-});
-
-const gamesSign = new WoodenSign(220, 50, "Games", () => {
-    document.getElementById('gamesModal').style.display = 'block';
-    if (window.achievementSystem) {
-        achievementSystem.trackSectionVisit('games');
-    }
-    if (window.audioManager) {
-        audioManager.play('click');
-    }
-    updateHighScores();
-});
-
-const achievementsSign = new WoodenSign(390, 50, "Achievements", () => {
-    document.getElementById('achievementsModal').style.display = 'block';
-    if (window.achievementSystem) {
-        achievementSystem.trackSectionVisit('achievements');
-    }
-    if (window.audioManager) {
-        audioManager.play('click');
-    }
-});
-
-const projectsSign = new WoodenSign(50, 130, "Projects", () => {
-    document.getElementById('projectsModal').style.display = 'block';
-    if (window.achievementSystem) {
-        achievementSystem.trackSectionVisit('projects');
-    }
-    if (window.audioManager) {
-        audioManager.play('click');
-    }
-});
-
-const contactSign = new WoodenSign(220, 130, "Contact", () => {
-    document.getElementById('contactModal').style.display = 'block';
-    if (window.achievementSystem) {
-        achievementSystem.trackSectionVisit('contact');
-    }
-    if (window.audioManager) {
-        audioManager.play('click');
-    }
-});
-
-const signs = [aboutSign, gamesSign, achievementsSign, projectsSign, contactSign];
-repositionSigns();
 
 // Current active game
 let currentGame = null;
 let animationId = null;
 let gameAnimationId = null;
 
-// Mouse handling for main canvas
-canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const mouseX = (e.clientX - rect.left) * scaleX;
-    const mouseY = (e.clientY - rect.top) * scaleY;
-    
-    let hoveringSomething = false;
-    signs.forEach(sign => {
-        sign.hovered = sign.isMouseOver(mouseX, mouseY);
-        if (sign.hovered) {
-            hoveringSomething = true;
-        }
-    });
-    
-    canvas.style.cursor = hoveringSomething ? 'pointer' : 'default';
-});
+// Hide movement hint after a few seconds
+setTimeout(() => {
+    const hint = document.getElementById('movementHint');
+    if (hint) {
+        hint.style.opacity = '0';
+        hint.style.transition = 'opacity 1s';
+        setTimeout(() => hint.style.display = 'none', 1000);
+    }
+}, 5000);
 
+// Click handling for game cards
 canvas.addEventListener('click', (e) => {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const mouseX = (e.clientX - rect.left) * scaleX;
-    const mouseY = (e.clientY - rect.top) * scaleY;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
     
-    signs.forEach(sign => {
-        if (sign.isMouseOver(mouseX, mouseY)) {
-            sign.callback();
-        }
-    });
+    // Check if clicking on a game card
+    if (window.gameCards) {
+        window.gameCards.forEach(card => {
+            const cardScreenX = card.worldX - sceneManager.cameraX;
+            
+            if (clickX >= cardScreenX && clickX <= cardScreenX + card.width &&
+                clickY >= card.y && clickY <= card.y + card.height) {
+                
+                console.log('Clicked game:', card.game);
+                startGame(card.game);
+                
+                if (window.audioManager) {
+                    audioManager.play('click');
+                }
+            }
+        });
+    }
 });
 
 // Modal controls
-document.getElementById('closeAbout').addEventListener('click', () => {
-    document.getElementById('aboutModal').style.display = 'none';
-});
-
-document.getElementById('closeGames').addEventListener('click', () => {
-    document.getElementById('gamesModal').style.display = 'none';
-});
-
-document.getElementById('closeAchievements').addEventListener('click', () => {
-    document.getElementById('achievementsModal').style.display = 'none';
-});
-
-document.getElementById('closeProjects').addEventListener('click', () => {
-    document.getElementById('projectsModal').style.display = 'none';
-});
-
-document.getElementById('closeContact').addEventListener('click', () => {
-    document.getElementById('contactModal').style.display = 'none';
-});
-
 document.getElementById('closeGame').addEventListener('click', () => {
     closeGameModal();
 });
@@ -193,15 +99,43 @@ document.getElementById('resetAchievements').addEventListener('click', () => {
     }
 });
 
+// Achievements modal
+document.getElementById('closeAchievements').addEventListener('click', () => {
+    document.getElementById('achievementsModal').style.display = 'none';
+});
+
+// Open achievements from music control area (add button)
+setTimeout(() => {
+    const musicControl = document.getElementById('musicControl');
+    if (musicControl) {
+        const achievementBtn = document.createElement('button');
+        achievementBtn.className = 'music-btn';
+        achievementBtn.textContent = '🏆 Achievements';
+        achievementBtn.style.marginTop = '10px';
+        achievementBtn.addEventListener('click', () => {
+            document.getElementById('achievementsModal').style.display = 'block';
+            if (window.achievementSystem) {
+                achievementSystem.trackSectionVisit('achievements');
+            }
+        });
+        musicControl.appendChild(achievementBtn);
+    }
+}, 100);
+
 // High score management
 function updateHighScores() {
     const flappyScore = localStorage.getItem('flappyHighScore') || 0;
     const snakeScore = localStorage.getItem('snakeHighScore') || 0;
     const pongScore = localStorage.getItem('pongHighScore') || 0;
     
-    document.getElementById('flappyHighScore').textContent = flappyScore;
-    document.getElementById('snakeHighScore').textContent = snakeScore;
-    document.getElementById('pongHighScore').textContent = pongScore;
+    // Update if elements exist
+    const flappyEl = document.getElementById('flappyHighScore');
+    const snakeEl = document.getElementById('snakeHighScore');
+    const pongEl = document.getElementById('pongHighScore');
+    
+    if (flappyEl) flappyEl.textContent = flappyScore;
+    if (snakeEl) snakeEl.textContent = snakeScore;
+    if (pongEl) pongEl.textContent = pongScore;
 }
 
 function saveHighScore(game, score) {
@@ -210,62 +144,6 @@ function saveHighScore(game, score) {
         localStorage.setItem(`${game}HighScore`, score);
     }
 }
-
-// Game button handlers
-document.getElementById('playFlappy').addEventListener('click', () => {
-    startGame('Flappy Bird');
-    document.getElementById('gamesModal').style.display = 'none';
-    
-    if (window.achievementSystem) {
-        achievementSystem.unlock('first_game');
-    }
-});
-
-document.getElementById('playSnake').addEventListener('click', () => {
-    startGame('Snake');
-    document.getElementById('gamesModal').style.display = 'none';
-    
-    if (window.achievementSystem) {
-        achievementSystem.unlock('first_game');
-    }
-});
-
-document.getElementById('playPong').addEventListener('click', () => {
-    startGame('Pong');
-    document.getElementById('gamesModal').style.display = 'none';
-    
-    if (window.achievementSystem) {
-        achievementSystem.unlock('first_game');
-    }
-});
-
-document.getElementById('playPong2P').addEventListener('click', () => {
-    startGame('Pong 2P');
-    document.getElementById('gamesModal').style.display = 'none';
-    document.getElementById('multiplayerStatus').classList.remove('hidden');
-    document.getElementById('playerCount').textContent = '2';
-    
-    if (window.achievementSystem) {
-        achievementSystem.unlock('first_game');
-    }
-});
-
-document.getElementById('playSnakeRace').addEventListener('click', () => {
-    startGame('Snake Race');
-    document.getElementById('gamesModal').style.display = 'none';
-    document.getElementById('multiplayerStatus').classList.remove('hidden');
-    document.getElementById('playerCount').textContent = '2';
-    
-    if (window.achievementSystem) {
-        achievementSystem.unlock('first_game');
-    }
-});
-
-document.getElementById('restartGame').addEventListener('click', () => {
-    if (currentGame) {
-        currentGame.reset();
-    }
-});
 
 function startGame(gameName) {
     const miniCanvas = document.getElementById('miniGameCanvas');
@@ -302,17 +180,25 @@ function startGame(gameName) {
         case 'Pong 2P':
             currentGame = new Pong2P(miniCanvas);
             gameInstructions.innerHTML = 'Player 1: W/S keys | Player 2: ↑↓ keys<br>First to 5 wins!';
+            document.getElementById('multiplayerStatus').classList.remove('hidden');
+            document.getElementById('playerCount').textContent = '2';
             runPong();
             break;
         case 'Snake Race':
             currentGame = new SnakeRace(miniCanvas);
             gameInstructions.innerHTML = 'Player 1: WASD | Player 2: Arrow Keys<br>Race to the highest score!';
+            document.getElementById('multiplayerStatus').classList.remove('hidden');
+            document.getElementById('playerCount').textContent = '2';
             runSnake();
             break;
     }
     
     document.getElementById('gameModal').style.display = 'block';
     currentGame.updateScoreDisplay();
+    
+    if (window.achievementSystem) {
+        achievementSystem.unlock('first_game');
+    }
 }
 
 function closeGameModal() {
@@ -357,18 +243,22 @@ function closeGameModal() {
     currentGame = null;
 }
 
+document.getElementById('restartGame').addEventListener('click', () => {
+    if (currentGame) {
+        currentGame.reset();
+    }
+});
+
 function runFlappyBird() {
     function loop() {
         if (!currentGame) return;
         currentGame.update();
         currentGame.draw();
         
-        // Check achievements during gameplay
         if (window.achievementSystem && !currentGame.gameOver) {
             achievementSystem.checkFlappyScore(currentGame.score);
         }
         
-        // Play game over sound
         if (currentGame.gameOver && window.audioManager && !currentGame.soundPlayed) {
             audioManager.play('gameOver');
             currentGame.soundPlayed = true;
@@ -385,12 +275,12 @@ function runSnake() {
         currentGame.update(timestamp);
         currentGame.draw();
         
-        // Check achievements during gameplay
         if (window.achievementSystem && !currentGame.gameOver) {
-            achievementSystem.checkSnakeScore(currentGame.score);
+            if (currentGame.constructor.name === 'Snake') {
+                achievementSystem.checkSnakeScore(currentGame.score);
+            }
         }
         
-        // Play game over sound
         if (currentGame.gameOver && window.audioManager && !currentGame.soundPlayed) {
             audioManager.play('gameOver');
             currentGame.soundPlayed = true;
@@ -407,12 +297,10 @@ function runPong() {
         currentGame.update();
         currentGame.draw();
         
-        // Play game over sound
         if (currentGame.gameOver && window.audioManager && !currentGame.soundPlayed) {
-            if (currentGame.player.score >= 5) {
-                audioManager.play('achievement');
-            } else {
-                audioManager.play('gameOver');
+            if (currentGame.player1 || currentGame.player) {
+                const won = currentGame.player1 ? currentGame.player1.score >= 5 : currentGame.player.score >= 5;
+                audioManager.play(won ? 'achievement' : 'gameOver');
             }
             currentGame.soundPlayed = true;
         }
@@ -422,21 +310,18 @@ function runPong() {
     loop();
 }
 
-// Main game loop for portfolio scene
+// Main game loop for scrolling world
 function animate() {
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw scene
-    scene.drawSky();
-    scene.drawGround();
+    // Draw scene (background, sections, etc.)
+    sceneManager.drawBackground();
+    sceneManager.drawGround();
+    sceneManager.drawSections();
     
     // Update and draw character
     character.update();
     character.draw();
-    
-    // Draw signs
-    signs.forEach(sign => sign.draw(ctx));
     
     animationId = requestAnimationFrame(animate);
 }
@@ -454,17 +339,23 @@ canvas.addEventListener('touchstart', (e) => {
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     const touch = e.touches[0];
-    const mouseX = (touch.clientX - rect.left) * scaleX;
-    const mouseY = (touch.clientY - rect.top) * scaleY;
+    const touchX = (touch.clientX - rect.left) * scaleX;
+    const touchY = (touch.clientY - rect.top) * scaleY;
     
-    signs.forEach(sign => {
-        if (sign.isMouseOver(mouseX, mouseY)) {
-            sign.callback();
-        }
-    });
+    // Check game cards
+    if (window.gameCards) {
+        window.gameCards.forEach(card => {
+            const cardScreenX = card.worldX - sceneManager.cameraX;
+            
+            if (touchX >= cardScreenX && touchX <= cardScreenX + card.width &&
+                touchY >= card.y && touchY <= card.y + card.height) {
+                startGame(card.game);
+            }
+        });
+    }
     
     // Check character tap
-    if (character.isPointInCharacter(mouseX, mouseY)) {
+    if (character.isPointInCharacter(touchX, touchY)) {
         character.onCharacterClick();
     }
 }, { passive: false });
