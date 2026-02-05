@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Portfolio Diagnostic Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #000;
+            color: #0f0;
+        }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #0f0; }
+        .pass { background: #001100; }
+        .fail { background: #110000; color: #f00; }
+        .warn { background: #111100; color: #ff0; }
+        h1 { color: #0ff; }
+        button { padding: 10px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 MAYOWA'S PORTFOLIO DIAGNOSTIC TEST</h1>
+    <div id="results"></div>
+    
+    <h2>Manual Tests:</h2>
+    <button onclick="testMusic()">Test Music Button</button>
+    <button onclick="testAchievements()">Test Achievement System</button>
+    <button onclick="testCanvas()">Test Canvas</button>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'pass') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.innerHTML = `${type === 'pass' ? '✅' : type === 'fail' ? '❌' : '⚠️'} ${message}`;
+            results.appendChild(div);
+        }
+        
+        // Test 1: Check if all required elements exist
+        function testElements() {
+            log('=== TESTING HTML ELEMENTS ===', 'warn');
+            
+            const required = [
+                'gameCanvas',
+                'musicToggle',
+                'achievementsBtn',
+                'achievementPopup',
+                'loadingScreen',
+                'contactModal',
+                'gameModal'
+            ];
+            
+            required.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    log(`Element #${id} exists`);
+                } else {
+                    log(`Element #${id} MISSING!`, 'fail');
+                }
+            });
+        }
+        
+        // Test 2: Check if scripts loaded
+        function testScripts() {
+            log('=== TESTING SCRIPT LOADING ===', 'warn');
+            
+            if (typeof SceneManager !== 'undefined') {
+                log('SceneManager class loaded');
+            } else {
+                log('SceneManager NOT FOUND - character.js failed!', 'fail');
+            }
+            
+            if (typeof Character !== 'undefined') {
+                log('Character class loaded');
+            } else {
+                log('Character NOT FOUND - character.js failed!', 'fail');
+            }
+            
+            if (typeof AudioManager !== 'undefined') {
+                log('AudioManager class loaded');
+            } else {
+                log('AudioManager NOT FOUND - audioManager.js failed!', 'fail');
+            }
+            
+            if (typeof AchievementSystem !== 'undefined') {
+                log('AchievementSystem class loaded');
+            } else {
+                log('AchievementSystem NOT FOUND - achievements.js failed!', 'fail');
+            }
+            
+            if (typeof FlappyBird !== 'undefined') {
+                log('FlappyBird class loaded');
+            } else {
+                log('FlappyBird NOT FOUND - flappyBird.js failed!', 'fail');
+            }
+            
+            if (typeof Panda !== 'undefined') {
+                log('Panda class loaded');
+            } else {
+                log('Panda NOT FOUND - panda.js failed!', 'fail');
+            }
+            
+            if (typeof Pong !== 'undefined') {
+                log('Pong class loaded');
+            } else {
+                log('Pong NOT FOUND - pong.js failed!', 'fail');
+            }
+        }
+        
+        // Test 3: Check global objects
+        function testGlobals() {
+            log('=== TESTING GLOBAL OBJECTS ===', 'warn');
+            
+            if (window.sceneManager) {
+                log('window.sceneManager exists');
+            } else {
+                log('window.sceneManager NOT FOUND - main.js initialization failed!', 'fail');
+            }
+            
+            if (window.audioManager) {
+                log('window.audioManager exists');
+            } else {
+                log('window.audioManager NOT FOUND - audioManager.js initialization failed!', 'fail');
+            }
+            
+            if (window.achievementSystem) {
+                log('window.achievementSystem exists');
+            } else {
+                log('window.achievementSystem NOT FOUND - achievements.js initialization failed!', 'fail');
+            }
+        }
+        
+        // Manual test functions
+        function testMusic() {
+            log('=== MANUAL MUSIC TEST ===', 'warn');
+            const btn = document.getElementById('musicToggle');
+            if (!btn) {
+                log('Music button not found!', 'fail');
+                return;
+            }
+            log('Music button found, attempting click...');
+            btn.click();
+            log('If you heard a change in the button, music system works!');
+        }
+        
+        function testAchievements() {
+            log('=== MANUAL ACHIEVEMENT TEST ===', 'warn');
+            if (!window.achievementSystem) {
+                log('Achievement system not initialized!', 'fail');
+                return;
+            }
+            log('Attempting to unlock test achievement...');
+            try {
+                achievementSystem.unlock('first_visit');
+                log('Achievement unlock called - check for popup!');
+            } catch (e) {
+                log('Achievement unlock FAILED: ' + e.message, 'fail');
+            }
+        }
+        
+        function testCanvas() {
+            log('=== MANUAL CANVAS TEST ===', 'warn');
+            const canvas = document.getElementById('gameCanvas');
+            if (!canvas) {
+                log('Canvas not found!', 'fail');
+                return;
+            }
+            log(`Canvas found: ${canvas.width}x${canvas.height}`);
+            
+            if (!window.sceneManager) {
+                log('SceneManager not initialized!', 'fail');
+                return;
+            }
+            log('SceneManager exists - animation should be running');
+        }
+        
+        // Run automatic tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testElements();
+                testScripts();
+                testGlobals();
+                
+                log('=== DIAGNOSTIC COMPLETE ===', 'warn');
+                log('Check results above. Red = broken, Green = working!');
+                log('Try manual tests with buttons above!');
+            }, 1000);
+        });
+    </script>
+    
+    <!-- Load all your scripts -->
+    <script src="audioManager.js"></script>
+    <script src="achievements.js"></script>
+    <script src="character.js"></script>
+    <script src="flappyBird.js"></script>
+    <script src="panda.js"></script>
+    <script src="pong.js"></script>
+    <script src="pong2P.js"></script>
+    <script src="snakeRace.js"></script>
+    <script src="loader.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
