@@ -13,6 +13,18 @@ class SceneManager {
         };
         
         this.currentSection = 'center';
+        
+        // Trees data
+        this.trees = [
+            { x: -800, scale: 1.2 },
+            { x: -400, scale: 1 },
+            { x: 200, scale: 1.1 },
+            { x: 600, scale: 0.9 },
+            { x: 1000, scale: 1.3 },
+            { x: 1400, scale: 1 },
+            { x: 1800, scale: 1.1 },
+            { x: 2200, scale: 1.2 }
+        ];
     }
 
     moveCamera(dx) {
@@ -52,139 +64,120 @@ class SceneManager {
     drawBackground() {
         this.time += 0.01;
         
-        // Realistic sky gradient
+        // Sky - pixel art style gradient
         const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-        gradient.addColorStop(0, '#87CEEB');
-        gradient.addColorStop(0.5, '#B0D4E3');
-        gradient.addColorStop(0.8, '#E8F4F8');
-        gradient.addColorStop(1, '#F0F8FF');
+        gradient.addColorStop(0, '#87ceeb');
+        gradient.addColorStop(0.6, '#b4d7f1');
+        gradient.addColorStop(1, '#d4e8f4');
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Realistic sun
-        const sunX = 150 - this.cameraX * 0.05;
-        const sunY = 100;
-        
-        // Sun glow
-        const sunGlow = this.ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 100);
-        sunGlow.addColorStop(0, 'rgba(255, 255, 200, 0.3)');
-        sunGlow.addColorStop(0.5, 'rgba(255, 255, 150, 0.1)');
-        sunGlow.addColorStop(1, 'rgba(255, 255, 100, 0)');
-        this.ctx.fillStyle = sunGlow;
-        this.ctx.fillRect(sunX - 100, sunY - 100, 200, 200);
-        
-        // Sun core
-        const sunGradient = this.ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 50);
-        sunGradient.addColorStop(0, '#FFF8DC');
-        sunGradient.addColorStop(0.7, '#FFD700');
-        sunGradient.addColorStop(1, '#FFA500');
-        this.ctx.fillStyle = sunGradient;
-        this.ctx.beginPath();
-        this.ctx.arc(sunX, sunY, 50, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Realistic clouds with depth
-        this.drawRealisticCloud(300 - this.cameraX * 0.3, 120, 1.2, 0.9);
-        this.drawRealisticCloud(600 - this.cameraX * 0.4, 90, 1, 1);
-        this.drawRealisticCloud(900 - this.cameraX * 0.35, 140, 0.8, 0.85);
-        this.drawRealisticCloud(1400 - this.cameraX * 0.3, 100, 1.1, 0.95);
-        this.drawRealisticCloud(2000 - this.cameraX * 0.25, 130, 0.9, 0.8);
+        // Pixel art clouds
+        this.drawPixelCloud(250 - this.cameraX * 0.3, 80, 1);
+        this.drawPixelCloud(600 - this.cameraX * 0.4, 120, 0.8);
+        this.drawPixelCloud(1000 - this.cameraX * 0.35, 60, 1.2);
+        this.drawPixelCloud(1500 - this.cameraX * 0.3, 100, 0.9);
     }
 
-    drawRealisticCloud(x, y, scale, opacity) {
-        this.ctx.save();
-        this.ctx.globalAlpha = opacity;
+    drawPixelCloud(x, y, scale) {
+        const s = 8 * scale;
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         
-        const gradient = this.ctx.createRadialGradient(x + 30 * scale, y - 10 * scale, 0, x + 30 * scale, y, 60 * scale);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-        gradient.addColorStop(0.6, 'rgba(240, 240, 240, 0.9)');
-        gradient.addColorStop(1, 'rgba(220, 220, 220, 0.7)');
-        
-        this.ctx.fillStyle = gradient;
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 35 * scale, 0, Math.PI * 2);
-        this.ctx.arc(x + 40 * scale, y - 5 * scale, 45 * scale, 0, Math.PI * 2);
-        this.ctx.arc(x + 80 * scale, y, 35 * scale, 0, Math.PI * 2);
-        this.ctx.arc(x + 50 * scale, y + 15 * scale, 30 * scale, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        this.ctx.restore();
+        // Cloud body (pixelated)
+        this.ctx.fillRect(x, y, s * 4, s);
+        this.ctx.fillRect(x - s, y + s, s * 6, s);
+        this.ctx.fillRect(x + s, y - s, s * 2, s);
+        this.ctx.fillRect(x - s, y + s * 2, s * 6, s);
     }
 
     drawGround() {
-        const groundY = this.canvas.height - 150;
+        const groundY = this.canvas.height - 200;
         
-        // Ground gradient
-        const groundGradient = this.ctx.createLinearGradient(0, groundY, 0, this.canvas.height);
-        groundGradient.addColorStop(0, '#8FBC8F');
-        groundGradient.addColorStop(0.3, '#7CB97C');
-        groundGradient.addColorStop(0.7, '#6B9B6B');
-        groundGradient.addColorStop(1, '#5A8A5A');
-        this.ctx.fillStyle = groundGradient;
+        // Dark soil base
+        this.ctx.fillStyle = '#2d1b00';
+        this.ctx.fillRect(0, this.canvas.height - 50, this.canvas.width, 50);
+        
+        // Grass layers (pixel art style)
+        const grassGradient = this.ctx.createLinearGradient(0, groundY, 0, this.canvas.height - 50);
+        grassGradient.addColorStop(0, '#7cb342');
+        grassGradient.addColorStop(0.5, '#689f38');
+        grassGradient.addColorStop(1, '#558b2f');
+        this.ctx.fillStyle = grassGradient;
         this.ctx.fillRect(0, groundY, this.canvas.width, 150);
         
-        // Grass texture
-        this.ctx.fillStyle = 'rgba(76, 153, 76, 0.3)';
-        for (let i = -this.cameraX % 15; i < this.canvas.width; i += 15) {
-            for (let j = 0; j < 10; j++) {
-                const grassX = i + (Math.random() - 0.5) * 10;
-                const grassY = groundY + j * 15;
-                this.ctx.fillRect(grassX, grassY, 2, 8);
-                this.ctx.fillRect(grassX + 3, grassY - 2, 2, 6);
-            }
+        // Grass details (small pixel tufts)
+        this.ctx.fillStyle = '#8bc34a';
+        for (let i = -this.cameraX % 30; i < this.canvas.width; i += 30) {
+            const tuftHeight = 6 + Math.sin(i * 0.1) * 3;
+            this.ctx.fillRect(i, groundY - 3, 3, tuftHeight);
+            this.ctx.fillRect(i + 10, groundY - 2, 3, tuftHeight - 2);
+            this.ctx.fillRect(i + 20, groundY - 4, 3, tuftHeight - 1);
         }
         
-        // Animated flowers
-        for (let i = -1200; i < this.worldWidth; i += 180) {
-            const flowerX = i - this.cameraX;
-            if (flowerX > -100 && flowerX < this.canvas.width + 100) {
-                this.drawAnimatedFlower(flowerX, groundY - 5, i);
+        // Draw trees
+        this.trees.forEach(tree => {
+            const treeX = tree.x - this.cameraX;
+            if (treeX > -400 && treeX < this.canvas.width + 400) {
+                this.drawPixelTree(treeX, groundY - 20, tree.scale);
             }
+        });
+        
+        // Small rocks
+        this.ctx.fillStyle = '#757575';
+        for (let i = -this.cameraX % 200; i < this.canvas.width; i += 200) {
+            this.ctx.fillRect(i + 50, groundY + 20, 15, 10);
+            this.ctx.fillRect(i + 52, groundY + 15, 11, 5);
         }
     }
 
-    drawAnimatedFlower(x, y, seed) {
-        const sway = Math.sin(this.time * 2 + seed * 0.1) * 3;
+    drawPixelTree(x, y, scale) {
+        const s = scale;
         
-        // Stem
-        this.ctx.strokeStyle = '#2D5016';
-        this.ctx.lineWidth = 3;
+        // Tree trunk (brown with texture)
+        this.ctx.fillStyle = '#5d4037';
+        this.ctx.fillRect(x - 20 * s, y, 40 * s, 100 * s);
+        
+        // Trunk highlights
+        this.ctx.fillStyle = '#6d4c41';
+        this.ctx.fillRect(x - 15 * s, y + 10 * s, 10 * s, 80 * s);
+        
+        // Trunk shadows
+        this.ctx.fillStyle = '#4e342e';
+        this.ctx.fillRect(x + 5 * s, y + 10 * s, 10 * s, 80 * s);
+        
+        // Foliage - layered pixel art leaves
+        const leafY = y - 80 * s;
+        
+        // Dark green base
+        this.ctx.fillStyle = '#558b2f';
         this.ctx.beginPath();
-        this.ctx.moveTo(x, y);
-        this.ctx.quadraticCurveTo(x + sway, y - 15, x + sway, y - 25);
-        this.ctx.stroke();
+        this.ctx.arc(x, leafY, 100 * s, 0, Math.PI * 2);
+        this.ctx.fill();
         
-        // Petals
-        const colors = [
-            ['#FF1493', '#FF69B4'],
-            ['#FFD700', '#FFA500'],
-            ['#FF4500', '#FF6347'],
-            ['#9370DB', '#BA55D3']
-        ];
-        const colorSet = colors[Math.floor(seed / 180) % colors.length];
-        
-        for (let i = 0; i < 6; i++) {
-            const angle = (i / 6) * Math.PI * 2 + this.time * 0.5;
-            const petalX = x + sway + Math.cos(angle) * 8;
-            const petalY = y - 25 + Math.sin(angle) * 8;
-            
-            const gradient = this.ctx.createRadialGradient(petalX, petalY, 0, petalX, petalY, 6);
-            gradient.addColorStop(0, colorSet[0]);
-            gradient.addColorStop(1, colorSet[1]);
-            
-            this.ctx.fillStyle = gradient;
-            this.ctx.beginPath();
-            this.ctx.ellipse(petalX, petalY, 6, 4, angle, 0, Math.PI * 2);
-            this.ctx.fill();
-        }
-        
-        // Center
-        const centerGradient = this.ctx.createRadialGradient(x + sway, y - 25, 0, x + sway, y - 25, 4);
-        centerGradient.addColorStop(0, '#FFD700');
-        centerGradient.addColorStop(1, '#FFA500');
-        this.ctx.fillStyle = centerGradient;
+        // Medium green layer
+        this.ctx.fillStyle = '#689f38';
         this.ctx.beginPath();
-        this.ctx.arc(x + sway, y - 25, 4, 0, Math.PI * 2);
+        this.ctx.arc(x - 20 * s, leafY - 10 * s, 80 * s, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        this.ctx.beginPath();
+        this.ctx.arc(x + 20 * s, leafY + 10 * s, 70 * s, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Light green highlights
+        this.ctx.fillStyle = '#8bc34a';
+        this.ctx.beginPath();
+        this.ctx.arc(x - 30 * s, leafY - 20 * s, 50 * s, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        this.ctx.beginPath();
+        this.ctx.arc(x + 25 * s, leafY - 15 * s, 45 * s, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Brightest highlights
+        this.ctx.fillStyle = '#aed581';
+        this.ctx.beginPath();
+        this.ctx.arc(x - 20 * s, leafY - 30 * s, 30 * s, 0, Math.PI * 2);
         this.ctx.fill();
     }
 
@@ -200,18 +193,41 @@ class SceneManager {
         const sectionX = this.sections.center.x - this.cameraX;
         
         if (sectionX > -this.sections.center.width && sectionX < this.canvas.width) {
-            // Welcome message
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            this.ctx.fillRect(sectionX + this.canvas.width / 2 - 300, 100, 600, 80);
+            // Welcome wooden sign on tree
+            const signX = this.canvas.width / 2 - 200;
+            const signY = 100;
+            
+            // Rope
+            this.ctx.strokeStyle = '#8B7355';
+            this.ctx.lineWidth = 3;
+            this.ctx.beginPath();
+            this.ctx.moveTo(signX + 200, 50);
+            this.ctx.lineTo(signX + 200, signY);
+            this.ctx.stroke();
+            
+            // Wooden board
+            this.ctx.fillStyle = '#8B4513';
+            this.ctx.fillRect(signX, signY, 400, 80);
+            
+            // Wood texture
+            this.ctx.fillStyle = '#654321';
+            this.ctx.fillRect(signX, signY + 15, 400, 3);
+            this.ctx.fillRect(signX, signY + 40, 400, 3);
+            this.ctx.fillRect(signX, signY + 65, 400, 3);
+            
+            // Border
+            this.ctx.strokeStyle = '#5a3a1a';
+            this.ctx.lineWidth = 5;
+            this.ctx.strokeRect(signX, signY, 400, 80);
             
             this.ctx.fillStyle = '#FFD700';
-            this.ctx.font = 'bold 36px Poppins';
+            this.ctx.font = 'bold 28px Poppins';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText("Welcome to Mayowa's Portfolio", sectionX + this.canvas.width / 2, 140);
+            this.ctx.fillText("Mayowa's Portfolio", signX + 200, signY + 45);
             
             this.ctx.fillStyle = '#FFF';
-            this.ctx.font = '18px Poppins';
-            this.ctx.fillText("← Move Left for About Me | Move Right for Games →", sectionX + this.canvas.width / 2, 165);
+            this.ctx.font = '16px Poppins';
+            this.ctx.fillText("← About Me | Games →", signX + 200, signY + 65);
         }
     }
 
@@ -219,35 +235,60 @@ class SceneManager {
         const sectionX = this.sections.aboutMe.x - this.cameraX;
         
         if (sectionX > -this.sections.aboutMe.width && sectionX < this.canvas.width) {
-            const boardX = sectionX + 100;
-            const boardY = 80;
-            const boardWidth = Math.min(700, this.canvas.width - 200);
-            const boardHeight = this.canvas.height - 250;
+            const boardX = Math.max(50, sectionX + 100);
+            const boardY = 120;
+            const boardWidth = Math.min(700, this.canvas.width - 100);
+            const boardHeight = this.canvas.height - 350;
+            
+            // Rope from tree
+            this.ctx.strokeStyle = '#8B7355';
+            this.ctx.lineWidth = 3;
+            this.ctx.beginPath();
+            this.ctx.moveTo(boardX + boardWidth / 2, 50);
+            this.ctx.lineTo(boardX + boardWidth / 2, boardY);
+            this.ctx.stroke();
             
             // Board shadow
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
             this.ctx.fillRect(boardX + 5, boardY + 5, boardWidth, boardHeight);
             
-            // Board background
-            const boardGradient = this.ctx.createLinearGradient(boardX, boardY, boardX, boardY + boardHeight);
-            boardGradient.addColorStop(0, '#FFFFFF');
-            boardGradient.addColorStop(1, '#F5F5F5');
-            this.ctx.fillStyle = boardGradient;
+            // Wooden board
+            this.ctx.fillStyle = '#D2691E';
             this.ctx.fillRect(boardX, boardY, boardWidth, boardHeight);
             
+            // Wood grain
+            this.ctx.fillStyle = '#A0522D';
+            for (let i = 0; i < 8; i++) {
+                this.ctx.fillRect(boardX, boardY + i * (boardHeight / 8), boardWidth, 2);
+            }
+            
             // Border
-            this.ctx.strokeStyle = '#667eea';
-            this.ctx.lineWidth = 4;
+            this.ctx.strokeStyle = '#8B4513';
+            this.ctx.lineWidth = 6;
             this.ctx.strokeRect(boardX, boardY, boardWidth, boardHeight);
+            
+            // Paper background
+            const paperX = boardX + 20;
+            const paperY = boardY + 20;
+            const paperWidth = boardWidth - 40;
+            const paperHeight = boardHeight - 40;
+            
+            this.ctx.fillStyle = '#FFFEF0';
+            this.ctx.fillRect(paperX, paperY, paperWidth, paperHeight);
+            
+            // Paper border
+            this.ctx.strokeStyle = '#D4AF37';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(paperX, paperY, paperWidth, paperHeight);
             
             // Title
             this.ctx.fillStyle = '#667eea';
             this.ctx.font = 'bold 32px Poppins';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText("Welcome to Mayowa's Home!", boardX + boardWidth / 2, boardY + 50);
+            this.ctx.fillText("Welcome to Mayowa's Home!", paperX + paperWidth / 2, paperY + 40);
             
             this.ctx.font = 'bold 24px Poppins';
-            this.ctx.fillText('About Me', boardX + boardWidth / 2, boardY + 90);
+            this.ctx.fillText('About Me', paperX + paperWidth / 2, paperY + 75);
             
             // Content
             this.ctx.fillStyle = '#333';
@@ -271,34 +312,32 @@ class SceneManager {
             ];
             
             lines.forEach((line, i) => {
-                this.ctx.fillText(line, boardX + 30, boardY + 130 + i * 22);
+                this.ctx.fillText(line, paperX + 20, paperY + 110 + i * 22);
             });
             
-            // Contact button with gradient
-            const btnX = boardX + boardWidth / 2 - 120;
-            const btnY = boardY + boardHeight - 60;
+            // Contact button
+            const btnX = paperX + paperWidth / 2 - 120;
+            const btnY = paperY + paperHeight - 50;
             const btnWidth = 240;
-            const btnHeight = 45;
+            const btnHeight = 40;
             
-            const btnGradient = this.ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnHeight);
-            btnGradient.addColorStop(0, '#667eea');
-            btnGradient.addColorStop(1, '#764ba2');
-            this.ctx.fillStyle = btnGradient;
+            this.ctx.fillStyle = '#667eea';
             this.ctx.fillRect(btnX, btnY, btnWidth, btnHeight);
+            this.ctx.strokeStyle = '#764ba2';
+            this.ctx.lineWidth = 3;
+            this.ctx.strokeRect(btnX, btnY, btnWidth, btnHeight);
             
             this.ctx.fillStyle = '#FFF';
             this.ctx.font = 'bold 16px Poppins';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('📧 Send Me a Message', btnX + btnWidth / 2, btnY + 28);
+            this.ctx.fillText('📧 Send Me a Message', btnX + btnWidth / 2, btnY + 25);
             
-            if (!window.contactButton) {
-                window.contactButton = {
-                    worldX: this.sections.aboutMe.x + 100 + boardWidth / 2 - 120,
-                    y: btnY,
-                    width: btnWidth,
-                    height: btnHeight
-                };
-            }
+            window.contactButton = {
+                worldX: this.sections.aboutMe.x + (boardX - sectionX) + paperWidth / 2 - 120,
+                y: btnY,
+                width: btnWidth,
+                height: btnHeight
+            };
         }
     }
 
@@ -306,10 +345,28 @@ class SceneManager {
         const sectionX = this.sections.games.x - this.cameraX;
         
         if (sectionX > -this.sections.games.width && sectionX < this.canvas.width) {
-            this.ctx.fillStyle = '#333';
-            this.ctx.font = 'bold 48px Poppins';
+            // Wooden sign
+            const signX = sectionX + 200;
+            const signY = 80;
+            
+            this.ctx.strokeStyle = '#8B7355';
+            this.ctx.lineWidth = 3;
+            this.ctx.beginPath();
+            this.ctx.moveTo(signX + 150, 50);
+            this.ctx.lineTo(signX + 150, signY);
+            this.ctx.stroke();
+            
+            this.ctx.fillStyle = '#8B4513';
+            this.ctx.fillRect(signX, signY, 300, 60);
+            
+            this.ctx.strokeStyle = '#5a3a1a';
+            this.ctx.lineWidth = 5;
+            this.ctx.strokeRect(signX, signY, 300, 60);
+            
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.font = 'bold 36px Poppins';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('My Games', sectionX + this.canvas.width / 2, 100);
+            this.ctx.fillText('My Games', signX + 150, signY + 42);
             
             const games = [
                 { name: 'Flappy Bird', icon: '🐦', color: '#87CEEB' },
@@ -323,7 +380,9 @@ class SceneManager {
             const cardHeight = 200;
             const gap = 40;
             const startX = sectionX + 150;
-            const startY = 150;
+            const startY = 180;
+            
+            window.gameCards = [];
             
             games.forEach((game, index) => {
                 const col = index % 3;
@@ -331,19 +390,16 @@ class SceneManager {
                 const x = startX + col * (cardWidth + gap);
                 const y = startY + row * (cardHeight + gap);
                 
-                // Card shadow
-                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-                this.ctx.fillRect(x + 4, y + 4, cardWidth, cardHeight);
+                // Shadow
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                this.ctx.fillRect(x + 5, y + 5, cardWidth, cardHeight);
                 
-                // Card background
+                // Card
                 this.ctx.fillStyle = '#fff';
                 this.ctx.fillRect(x, y, cardWidth, cardHeight);
                 
-                // Thumbnail with gradient
-                const thumbGradient = this.ctx.createLinearGradient(x, y, x, y + 130);
-                thumbGradient.addColorStop(0, game.color);
-                thumbGradient.addColorStop(1, this.adjustColor(game.color, -30));
-                this.ctx.fillStyle = thumbGradient;
+                // Thumbnail
+                this.ctx.fillStyle = game.color;
                 this.ctx.fillRect(x, y, cardWidth, 130);
                 
                 // Icon
@@ -356,12 +412,11 @@ class SceneManager {
                 this.ctx.font = 'bold 20px Poppins';
                 this.ctx.fillText(game.name, x + cardWidth / 2, y + 160);
                 
-                // Play hint
+                // Subtitle
                 this.ctx.fillStyle = '#666';
                 this.ctx.font = '14px Poppins';
                 this.ctx.fillText('Click to play', x + cardWidth / 2, y + 180);
                 
-                if (!window.gameCards) window.gameCards = [];
                 window.gameCards[index] = {
                     worldX: this.sections.games.x + 150 + col * (cardWidth + gap),
                     y: y,
@@ -372,14 +427,6 @@ class SceneManager {
             });
         }
     }
-
-    adjustColor(color, amount) {
-        const hex = color.replace('#', '');
-        const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
-        const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
-        const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
-        return `rgb(${r}, ${g}, ${b})`;
-    }
 }
 
 class Character {
@@ -387,28 +434,32 @@ class Character {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.x = canvas.width / 2;
-        this.y = canvas.height - 180;
-        this.width = 48;
-        this.height = 64;
+        this.y = canvas.height - 230;
         this.frame = 0;
         this.frameCount = 0;
         this.isWalking = false;
         this.facingRight = true;
         this.walkSpeed = 6;
         this.velocity = 0;
+        this.waveFrame = 0;
+        this.isWaving = true;
         
         this.phrases = [
             "Hi there! 👋",
             "Use Arrow Keys!",
-            "Let's explore! 🎮",
+            "Let's explore!",
             "Check out my work!",
             "Move around!",
             "Games to the right!",
-            "About me to the left!",
-            "Keep exploring!"
+            "About me to the left!"
         ];
         
         this.setupControls();
+        
+        // Wave for 3 seconds at start
+        setTimeout(() => {
+            this.isWaving = false;
+        }, 3000);
     }
 
     setupControls() {
@@ -416,6 +467,7 @@ class Character {
         
         window.addEventListener('keydown', (e) => {
             this.keys[e.code] = true;
+            this.isWaving = false;
             if(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) {
                 e.preventDefault();
             }
@@ -427,10 +479,8 @@ class Character {
 
         this.canvas.addEventListener('click', (e) => {
             const rect = this.canvas.getBoundingClientRect();
-            const scaleX = this.canvas.width / rect.width;
-            const scaleY = this.canvas.height / rect.height;
-            const mouseX = (e.clientX - rect.left) * scaleX;
-            const mouseY = (e.clientY - rect.top) * scaleY;
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
             
             if (this.isPointInCharacter(mouseX, mouseY)) {
                 this.onCharacterClick();
@@ -439,8 +489,10 @@ class Character {
     }
 
     isPointInCharacter(x, y) {
-        return x >= this.x - this.width / 2 && x <= this.x + this.width / 2 && 
-               y >= this.y - this.height && y <= this.y;
+        const charScreenX = this.x;
+        const charScreenY = this.y;
+        return x >= charScreenX - 30 && x <= charScreenX + 30 && 
+               y >= charScreenY - 50 && y <= charScreenY;
     }
 
     onCharacterClick() {
@@ -454,6 +506,10 @@ class Character {
         if (this.velocity === 0) {
             this.velocity = -15;
         }
+        this.isWaving = true;
+        setTimeout(() => {
+            this.isWaving = false;
+        }, 2000);
     }
 
     showSpeech(text) {
@@ -465,9 +521,8 @@ class Character {
         speechText.textContent = text;
         bubble.classList.remove('hidden');
         
-        const canvasRect = this.canvas.getBoundingClientRect();
-        bubble.style.left = (canvasRect.left + (this.x / this.canvas.width) * canvasRect.width - 60) + 'px';
-        bubble.style.top = (canvasRect.top + (this.y / this.canvas.height) * canvasRect.height - 120) + 'px';
+        bubble.style.left = this.x + 'px';
+        bubble.style.top = (this.y - 80) + 'px';
         
         setTimeout(() => {
             bubble.classList.add('hidden');
@@ -500,7 +555,7 @@ class Character {
         this.velocity += 0.6;
         this.y += this.velocity;
         
-        const groundY = this.canvas.height - 180;
+        const groundY = this.canvas.height - 230;
         if (this.y >= groundY) {
             this.y = groundY;
             this.velocity = 0;
@@ -508,83 +563,104 @@ class Character {
         
         if (this.isWalking) {
             this.frameCount++;
-            if (this.frameCount % 6 === 0) {
-                this.frame = (this.frame + 1) % 4;
+            if (this.frameCount % 8 === 0) {
+                this.frame = (this.frame + 1) % 2;
             }
         } else {
-            this.frame = 0;
             this.frameCount = 0;
+        }
+        
+        if (this.isWaving) {
+            this.waveFrame++;
         }
     }
 
     draw() {
         this.ctx.save();
         
+        const scale = 3;
+        const baseX = this.x;
+        const baseY = this.y;
+        
         if (!this.facingRight) {
-            this.ctx.translate(this.x * 2, 0);
+            this.ctx.translate(baseX * 2, 0);
             this.ctx.scale(-1, 1);
         }
         
         // Shadow
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
         this.ctx.beginPath();
-        this.ctx.ellipse(this.x, this.y + 2, 18, 5, 0, 0, Math.PI * 2);
+        this.ctx.ellipse(baseX, baseY + 2, 18, 5, 0, 0, Math.PI * 2);
         this.ctx.fill();
         
-        // Pixel art style character
-        const px = 4; // Pixel size
-        const legMove = this.isWalking ? Math.sin(this.frame * Math.PI / 2) * 2 : 0;
+        // Legs
+        const legOffset = this.isWalking ? (this.frame === 0 ? -2 : 2) : 0;
         
-        // Legs (dark blue pants)
-        this.ctx.fillStyle = '#1a1a2e';
-        this.ctx.fillRect(this.x - 6*px, this.y - 4*px, 3*px, 4*px); // Left leg
-        this.ctx.fillRect(this.x + 3*px, this.y - 4*px + legMove, 3*px, 4*px); // Right leg
+        // Left leg (gray pants)
+        this.ctx.fillStyle = '#B0B0B0';
+        this.ctx.fillRect(baseX - 6 * scale, baseY - 12 * scale, 5 * scale, 10 * scale);
+        
+        // Right leg
+        this.ctx.fillRect(baseX + 1 * scale, baseY - 12 * scale + legOffset, 5 * scale, 10 * scale - Math.abs(legOffset));
         
         // Shoes (black)
         this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(this.x - 7*px, this.y - px, 4*px, px);
-        this.ctx.fillRect(this.x + 3*px, this.y - px + legMove, 4*px, px);
+        this.ctx.fillRect(baseX - 7 * scale, baseY - 2 * scale, 6 * scale, 3 * scale);
+        this.ctx.fillRect(baseX + 1 * scale, baseY - 2 * scale + legOffset, 6 * scale, 3 * scale);
         
         // Body (blue shirt)
-        this.ctx.fillStyle = '#4169E1';
-        this.ctx.fillRect(this.x - 6*px, this.y - 10*px, 12*px, 6*px);
+        this.ctx.fillStyle = '#4A90E2';
+        this.ctx.fillRect(baseX - 7 * scale, baseY - 22 * scale, 14 * scale, 10 * scale);
         
         // Arms
-        const armSwing = this.isWalking ? Math.sin(this.frame * Math.PI / 2) * px : 0;
-        this.ctx.fillStyle = '#8B4513'; // Skin tone
-        this.ctx.fillRect(this.x - 8*px, this.y - 9*px + armSwing, 2*px, 5*px); // Left arm
-        this.ctx.fillRect(this.x + 6*px, this.y - 9*px - armSwing, 2*px, 5*px); // Right arm
+        this.ctx.fillStyle = '#8B4513';
+        
+        if (this.isWaving) {
+            // Waving arm
+            const waveAngle = Math.sin(this.waveFrame * 0.2) * 30;
+            this.ctx.save();
+            this.ctx.translate(baseX + 7 * scale, baseY - 20 * scale);
+            this.ctx.rotate((waveAngle - 45) * Math.PI / 180);
+            this.ctx.fillRect(0, 0, 3 * scale, 8 * scale);
+            this.ctx.restore();
+            
+            // Other arm
+            this.ctx.fillRect(baseX - 10 * scale, baseY - 20 * scale, 3 * scale, 8 * scale);
+        } else {
+            const armSwing = this.isWalking ? (this.frame === 0 ? 2 : -2) : 0;
+            this.ctx.fillRect(baseX - 10 * scale, baseY - 20 * scale + armSwing, 3 * scale, 8 * scale);
+            this.ctx.fillRect(baseX + 7 * scale, baseY - 20 * scale - armSwing, 3 * scale, 8 * scale);
+        }
         
         // Neck
         this.ctx.fillStyle = '#8B4513';
-        this.ctx.fillRect(this.x - 2*px, this.y - 11*px, 4*px, 2*px);
+        this.ctx.fillRect(baseX - 3 * scale, baseY - 24 * scale, 6 * scale, 3 * scale);
         
         // Head (round)
         this.ctx.fillStyle = '#8B4513';
-        this.ctx.fillRect(this.x - 4*px, this.y - 15*px, 8*px, 6*px);
-        this.ctx.fillRect(this.x - 5*px, this.y - 14*px, 10*px, 4*px);
+        this.ctx.fillRect(baseX - 5 * scale, baseY - 30 * scale, 10 * scale, 8 * scale);
+        this.ctx.fillRect(baseX - 6 * scale, baseY - 28 * scale, 12 * scale, 6 * scale);
         
-        // Hair (afro - black)
+        // Hair (black afro)
         this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(this.x - 5*px, this.y - 17*px, 10*px, 4*px);
-        this.ctx.fillRect(this.x - 6*px, this.y - 16*px, 12*px, 3*px);
-        this.ctx.fillRect(this.x - 6*px, this.y - 15*px, 2*px, 2*px);
-        this.ctx.fillRect(this.x + 4*px, this.y - 15*px, 2*px, 2*px);
+        this.ctx.fillRect(baseX - 6 * scale, baseY - 33 * scale, 12 * scale, 5 * scale);
+        this.ctx.fillRect(baseX - 7 * scale, baseY - 31 * scale, 14 * scale, 3 * scale);
         
-        // Eyes (white with black pupils)
+        // Eyes
         this.ctx.fillStyle = '#FFF';
-        this.ctx.fillRect(this.x - 3*px, this.y - 14*px, 2*px, 2*px);
-        this.ctx.fillRect(this.x + px, this.y - 14*px, 2*px, 2*px);
+        this.ctx.fillRect(baseX - 4 * scale, baseY - 28 * scale, 3 * scale, 3 * scale);
+        this.ctx.fillRect(baseX + 1 * scale, baseY - 28 * scale, 3 * scale, 3 * scale);
         
+        // Pupils
         this.ctx.fillStyle = '#000';
-        const pupilDir = this.facingRight ? 1 : 0;
-        this.ctx.fillRect(this.x - 3*px + pupilDir, this.y - 14*px, px, px);
-        this.ctx.fillRect(this.x + px + pupilDir, this.y - 14*px, px, px);
+        const pupilX = this.facingRight ? 1 : 0;
+        this.ctx.fillRect(baseX - 4 * scale + pupilX, baseY - 28 * scale + 1, 2 * scale, 2 * scale);
+        this.ctx.fillRect(baseX + 1 * scale + pupilX, baseY - 28 * scale + 1, 2 * scale, 2 * scale);
         
-        // Smile
-        this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(this.x - 2*px, this.y - 11*px, px, px);
-        this.ctx.fillRect(this.x + px, this.y - 11*px, px, px);
+        // Mouth (smile)
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.fillRect(baseX - 2 * scale, baseY - 24 * scale, scale, scale);
+        this.ctx.fillRect(baseX + scale, baseY - 24 * scale, scale, scale);
         
         this.ctx.restore();
     }
