@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mayowa's Game Portfolio</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="stars-bg"></div>
+        <div class="loading-content">
+            <div class="retro-title">MAYOWA'S</div>
+            <div class="retro-subtitle">GAME PORTFOLIO</div>
+            <div class="spaceship">🚀</div>
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loadingBar"></div>
+            </div>
+            <div class="loading-text" id="loadingText">INITIALIZING SYSTEMS...</div>
+            <div class="loading-percentage" id="loadingPercentage">0%</div>
+        </div>
+        <div class="planet planet-1"></div>
+        <div class="planet planet-2"></div>
+    </div>
+
+    <!-- Music Control -->
+    <div id="musicControl">
+        <button id="musicToggle" class="music-btn">🎵 Music: ON</button>
+        <div class="volume-control">
+            <span>🔊</span>
+            <input type="range" id="volumeSlider" min="0" max="100" value="50">
+        </div>
+        <button id="achievementsBtn" class="music-btn" style="margin-top: 10px;">🏆 Achievements</button>
+    </div>
+
+    <!-- Achievement Popup -->
+    <div id="achievementPopup" class="achievement-popup hidden">
+        <div class="achievement-popup-content">
+            <div class="achievement-popup-icon">🏆</div>
+            <div class="achievement-popup-text">
+                <div class="achievement-popup-title">ACHIEVEMENT UNLOCKED!</div>
+                <div class="achievement-popup-name"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Section Indicator -->
+    <div id="sectionIndicator" class="section-indicator hidden">Home</div>
+
+    <!-- Movement Instructions -->
+    <div id="movementHint" class="movement-hint">
+        ← Use Arrow Keys to Move →
+    </div>
+
+    <!-- Character Speech Bubble -->
+    <div id="speechBubble" class="speech-bubble hidden">
+        <p id="speechText"></p>
+    </div>
+
+    <!-- Contact Form Modal -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeContact">&times;</span>
+            <h2>Send Me a Message</h2>
+            <form id="contactForm" class="contact-form">
+                <input type="text" id="contactName" placeholder="Your Name" required>
+                <input type="email" id="contactEmail" placeholder="Your Email" required>
+                <textarea id="contactMessage" placeholder="Your Message" rows="5" required></textarea>
+                <button type="submit" class="game-btn">Send Message</button>
+            </form>
+            <div id="formSuccess" class="form-success hidden">
+                ✅ Message sent! Thank you for reaching out!
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements Modal -->
+    <div id="achievementsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeAchievements">&times;</span>
+            <h2>🏆 Achievements</h2>
+            <div class="achievement-stats">
+                <button id="resetAchievements" class="reset-btn">Reset All Achievements</button>
+            </div>
+            <div id="achievementsList" class="achievements-list">
+                <!-- Achievements will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Container Modal -->
+    <div id="gameModal" class="modal">
+        <div class="modal-content game-modal-content">
+            <span class="close" id="closeGame">&times;</span>
+            <h2 id="gameTitle">Game</h2>
+            <div id="gameScore">Score: 0</div>
+            <canvas id="miniGameCanvas"></canvas>
+            <div id="gameInstructions"></div>
+            <button id="restartGame" class="game-btn">Restart</button>
+        </div>
+    </div>
+
+    <!-- Practice Better Animation -->
+    <div id="practiceBetter" class="practice-better hidden">
+        <div class="practice-text">PRACTICE BETTER!</div>
+    </div>
+
+    <script src="loader.js"></script>
+    <script src="audioManager.js"></script>
+    <script src="achievements.js"></script>
+    <script src="character.js"></script>
+    <script src="flappyBird.js"></script>
+    <script src="panda.js"></script>
+    <script src="pong.js"></script>
+    <script src="pong2P.js"></script>
+    <script src="snakeRace.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
