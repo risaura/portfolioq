@@ -315,6 +315,48 @@ class SceneManager {
                 this.ctx.fillText(line, paperX + 20, paperY + 110 + i * 22);
             });
             
+            // GLOWING "ABOUT ME" BUTTON - CENTER OVERLAY
+            const glowBtnWidth = 400;
+            const glowBtnHeight = 100;
+            const glowBtnX = paperX + paperWidth / 2 - glowBtnWidth / 2;
+            const glowBtnY = paperY + paperHeight / 2 - 50;
+            
+            // Animated glow effect
+            const glowIntensity = 0.5 + Math.sin(this.time * 3) * 0.3;
+            
+            // Outer glow
+            this.ctx.shadowColor = '#00FF00';
+            this.ctx.shadowBlur = 40 * glowIntensity;
+            this.ctx.fillStyle = '#000';
+            this.ctx.fillRect(glowBtnX, glowBtnY, glowBtnWidth, glowBtnHeight);
+            
+            // Reset shadow
+            this.ctx.shadowBlur = 0;
+            
+            // Inner glow border
+            this.ctx.strokeStyle = '#00FF00';
+            this.ctx.lineWidth = 4;
+            this.ctx.strokeRect(glowBtnX + 5, glowBtnY + 5, glowBtnWidth - 10, glowBtnHeight - 10);
+            
+            // Text with pixel font style
+            this.ctx.fillStyle = '#00FF00';
+            this.ctx.font = 'bold 40px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('About Me', glowBtnX + glowBtnWidth / 2, glowBtnY + glowBtnHeight / 2 + 10);
+            
+            // Pulsing effect on text
+            this.ctx.shadowColor = '#00FF00';
+            this.ctx.shadowBlur = 25 * glowIntensity;
+            this.ctx.fillText('About Me', glowBtnX + glowBtnWidth / 2, glowBtnY + glowBtnHeight / 2 + 10);
+            this.ctx.shadowBlur = 0;
+            
+            window.aboutMeButton = {
+                worldX: this.sections.aboutMe.x + (glowBtnX - sectionX),
+                y: glowBtnY,
+                width: glowBtnWidth,
+                height: glowBtnHeight
+            };
+            
             // Contact button
             const btnX = paperX + paperWidth / 2 - 120;
             const btnY = paperY + paperHeight - 50;
