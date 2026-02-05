@@ -3,12 +3,13 @@ class SceneManager {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.cameraX = 0;
-        this.worldWidth = 3000;
+        this.worldWidth = 4000;
+        this.time = 0;
         
         this.sections = {
-            aboutMe: { x: 0, width: 800, name: 'About Me' },
-            center: { x: 800, width: 400, name: 'Home' },
-            games: { x: 1200, width: 1800, name: 'Games' }
+            center: { x: 0, width: 1200, name: 'Home' },
+            aboutMe: { x: -1200, width: 1200, name: 'About Me' },
+            games: { x: 1200, width: 2800, name: 'Games' }
         };
         
         this.currentSection = 'center';
@@ -16,16 +17,16 @@ class SceneManager {
 
     moveCamera(dx) {
         this.cameraX += dx;
-        this.cameraX = Math.max(0, Math.min(this.worldWidth - this.canvas.width, this.cameraX));
+        this.cameraX = Math.max(-1200, Math.min(2800, this.cameraX));
         
-        const characterWorldX = this.cameraX + 150;
+        const characterWorldX = this.cameraX;
         
-        if (characterWorldX < this.sections.aboutMe.x + this.sections.aboutMe.width) {
+        if (characterWorldX < 0) {
             if (this.currentSection !== 'aboutMe') {
                 this.currentSection = 'aboutMe';
                 this.onSectionEnter('aboutMe');
             }
-        } else if (characterWorldX < this.sections.center.x + this.sections.center.width) {
+        } else if (characterWorldX < 1200) {
             if (this.currentSection !== 'center') {
                 this.currentSection = 'center';
                 this.onSectionEnter('center');
@@ -40,7 +41,6 @@ class SceneManager {
 
     onSectionEnter(section) {
         console.log('Entered section:', section);
-        
         const indicator = document.getElementById('sectionIndicator');
         if (indicator) {
             indicator.textContent = this.sections[section].name;
@@ -50,130 +50,208 @@ class SceneManager {
     }
 
     drawBackground() {
+        this.time += 0.01;
+        
+        // Realistic sky gradient
         const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
         gradient.addColorStop(0, '#87CEEB');
-        gradient.addColorStop(0.7, '#B0E2FF');
-        gradient.addColorStop(1, '#E0F6FF');
+        gradient.addColorStop(0.5, '#B0D4E3');
+        gradient.addColorStop(0.8, '#E8F4F8');
+        gradient.addColorStop(1, '#F0F8FF');
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Sun
-        this.ctx.fillStyle = '#FFD700';
+        // Realistic sun
+        const sunX = 150 - this.cameraX * 0.05;
+        const sunY = 100;
+        
+        // Sun glow
+        const sunGlow = this.ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 100);
+        sunGlow.addColorStop(0, 'rgba(255, 255, 200, 0.3)');
+        sunGlow.addColorStop(0.5, 'rgba(255, 255, 150, 0.1)');
+        sunGlow.addColorStop(1, 'rgba(255, 255, 100, 0)');
+        this.ctx.fillStyle = sunGlow;
+        this.ctx.fillRect(sunX - 100, sunY - 100, 200, 200);
+        
+        // Sun core
+        const sunGradient = this.ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 50);
+        sunGradient.addColorStop(0, '#FFF8DC');
+        sunGradient.addColorStop(0.7, '#FFD700');
+        sunGradient.addColorStop(1, '#FFA500');
+        this.ctx.fillStyle = sunGradient;
         this.ctx.beginPath();
-        this.ctx.arc(100 - this.cameraX * 0.1, 80, 40, 0, Math.PI * 2);
+        this.ctx.arc(sunX, sunY, 50, 0, Math.PI * 2);
         this.ctx.fill();
         
-        this.ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
-        this.ctx.beginPath();
-        this.ctx.arc(100 - this.cameraX * 0.1, 80, 60, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Clouds
-        this.drawCloud(200 - this.cameraX * 0.5, 100, 1);
-        this.drawCloud(500 - this.cameraX * 0.5, 80, 0.8);
-        this.drawCloud(800 - this.cameraX * 0.5, 120, 1.2);
-        this.drawCloud(1200 - this.cameraX * 0.4, 90, 0.9);
-        this.drawCloud(1600 - this.cameraX * 0.4, 110, 1.1);
-        this.drawCloud(2000 - this.cameraX * 0.3, 85, 1);
+        // Realistic clouds with depth
+        this.drawRealisticCloud(300 - this.cameraX * 0.3, 120, 1.2, 0.9);
+        this.drawRealisticCloud(600 - this.cameraX * 0.4, 90, 1, 1);
+        this.drawRealisticCloud(900 - this.cameraX * 0.35, 140, 0.8, 0.85);
+        this.drawRealisticCloud(1400 - this.cameraX * 0.3, 100, 1.1, 0.95);
+        this.drawRealisticCloud(2000 - this.cameraX * 0.25, 130, 0.9, 0.8);
     }
 
-    drawCloud(x, y, scale) {
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    drawRealisticCloud(x, y, scale, opacity) {
+        this.ctx.save();
+        this.ctx.globalAlpha = opacity;
+        
+        const gradient = this.ctx.createRadialGradient(x + 30 * scale, y - 10 * scale, 0, x + 30 * scale, y, 60 * scale);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        gradient.addColorStop(0.6, 'rgba(240, 240, 240, 0.9)');
+        gradient.addColorStop(1, 'rgba(220, 220, 220, 0.7)');
+        
+        this.ctx.fillStyle = gradient;
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 25 * scale, 0, Math.PI * 2);
-        this.ctx.arc(x + 25 * scale, y, 30 * scale, 0, Math.PI * 2);
-        this.ctx.arc(x + 50 * scale, y, 25 * scale, 0, Math.PI * 2);
+        this.ctx.arc(x, y, 35 * scale, 0, Math.PI * 2);
+        this.ctx.arc(x + 40 * scale, y - 5 * scale, 45 * scale, 0, Math.PI * 2);
+        this.ctx.arc(x + 80 * scale, y, 35 * scale, 0, Math.PI * 2);
+        this.ctx.arc(x + 50 * scale, y + 15 * scale, 30 * scale, 0, Math.PI * 2);
         this.ctx.fill();
+        
+        this.ctx.restore();
     }
 
     drawGround() {
-        const groundY = this.canvas.height - 100;
+        const groundY = this.canvas.height - 150;
         
-        this.ctx.fillStyle = '#90EE90';
-        this.ctx.fillRect(0, groundY, this.canvas.width, 100);
+        // Ground gradient
+        const groundGradient = this.ctx.createLinearGradient(0, groundY, 0, this.canvas.height);
+        groundGradient.addColorStop(0, '#8FBC8F');
+        groundGradient.addColorStop(0.3, '#7CB97C');
+        groundGradient.addColorStop(0.7, '#6B9B6B');
+        groundGradient.addColorStop(1, '#5A8A5A');
+        this.ctx.fillStyle = groundGradient;
+        this.ctx.fillRect(0, groundY, this.canvas.width, 150);
         
-        this.ctx.fillStyle = '#7CCD7C';
-        for (let i = -this.cameraX % 20; i < this.canvas.width; i += 20) {
-            this.ctx.fillRect(i, groundY, 10, 5);
-            this.ctx.fillRect(i + 5, groundY + 5, 8, 5);
+        // Grass texture
+        this.ctx.fillStyle = 'rgba(76, 153, 76, 0.3)';
+        for (let i = -this.cameraX % 15; i < this.canvas.width; i += 15) {
+            for (let j = 0; j < 10; j++) {
+                const grassX = i + (Math.random() - 0.5) * 10;
+                const grassY = groundY + j * 15;
+                this.ctx.fillRect(grassX, grassY, 2, 8);
+                this.ctx.fillRect(grassX + 3, grassY - 2, 2, 6);
+            }
         }
         
-        // Flowers
-        for (let i = 0; i < this.worldWidth; i += 150) {
+        // Animated flowers
+        for (let i = -1200; i < this.worldWidth; i += 180) {
             const flowerX = i - this.cameraX;
-            if (flowerX > -50 && flowerX < this.canvas.width + 50) {
-                this.drawFlower(flowerX, groundY - 10);
+            if (flowerX > -100 && flowerX < this.canvas.width + 100) {
+                this.drawAnimatedFlower(flowerX, groundY - 5, i);
             }
         }
     }
 
-    drawFlower(x, y) {
-        this.ctx.strokeStyle = '#228B22';
-        this.ctx.lineWidth = 2;
+    drawAnimatedFlower(x, y, seed) {
+        const sway = Math.sin(this.time * 2 + seed * 0.1) * 3;
+        
+        // Stem
+        this.ctx.strokeStyle = '#2D5016';
+        this.ctx.lineWidth = 3;
         this.ctx.beginPath();
         this.ctx.moveTo(x, y);
-        this.ctx.lineTo(x, y + 15);
+        this.ctx.quadraticCurveTo(x + sway, y - 15, x + sway, y - 25);
         this.ctx.stroke();
         
-        const colors = ['#FF69B4', '#FFD700', '#FF6347', '#9370DB'];
-        const color = colors[Math.floor(x / 150) % colors.length];
-        this.ctx.fillStyle = color;
-        for (let i = 0; i < 5; i++) {
-            const angle = (i / 5) * Math.PI * 2;
+        // Petals
+        const colors = [
+            ['#FF1493', '#FF69B4'],
+            ['#FFD700', '#FFA500'],
+            ['#FF4500', '#FF6347'],
+            ['#9370DB', '#BA55D3']
+        ];
+        const colorSet = colors[Math.floor(seed / 180) % colors.length];
+        
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 + this.time * 0.5;
+            const petalX = x + sway + Math.cos(angle) * 8;
+            const petalY = y - 25 + Math.sin(angle) * 8;
+            
+            const gradient = this.ctx.createRadialGradient(petalX, petalY, 0, petalX, petalY, 6);
+            gradient.addColorStop(0, colorSet[0]);
+            gradient.addColorStop(1, colorSet[1]);
+            
+            this.ctx.fillStyle = gradient;
             this.ctx.beginPath();
-            this.ctx.arc(x + Math.cos(angle) * 6, y + Math.sin(angle) * 6, 4, 0, Math.PI * 2);
+            this.ctx.ellipse(petalX, petalY, 6, 4, angle, 0, Math.PI * 2);
             this.ctx.fill();
         }
         
-        this.ctx.fillStyle = '#FFD700';
+        // Center
+        const centerGradient = this.ctx.createRadialGradient(x + sway, y - 25, 0, x + sway, y - 25, 4);
+        centerGradient.addColorStop(0, '#FFD700');
+        centerGradient.addColorStop(1, '#FFA500');
+        this.ctx.fillStyle = centerGradient;
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 3, 0, Math.PI * 2);
+        this.ctx.arc(x + sway, y - 25, 4, 0, Math.PI * 2);
         this.ctx.fill();
     }
 
     drawSections() {
         this.ctx.save();
+        this.drawCenterSection();
         this.drawAboutMeSection();
         this.drawGamesSection();
         this.ctx.restore();
+    }
+
+    drawCenterSection() {
+        const sectionX = this.sections.center.x - this.cameraX;
+        
+        if (sectionX > -this.sections.center.width && sectionX < this.canvas.width) {
+            // Welcome message
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            this.ctx.fillRect(sectionX + this.canvas.width / 2 - 300, 100, 600, 80);
+            
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.font = 'bold 36px Poppins';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText("Welcome to Mayowa's Portfolio", sectionX + this.canvas.width / 2, 140);
+            
+            this.ctx.fillStyle = '#FFF';
+            this.ctx.font = '18px Poppins';
+            this.ctx.fillText("← Move Left for About Me | Move Right for Games →", sectionX + this.canvas.width / 2, 165);
+        }
     }
 
     drawAboutMeSection() {
         const sectionX = this.sections.aboutMe.x - this.cameraX;
         
         if (sectionX > -this.sections.aboutMe.width && sectionX < this.canvas.width) {
-            const signX = sectionX + 150;
-            const signY = 60;
-            
-            this.ctx.fillStyle = '#8B4513';
-            this.ctx.fillRect(signX, signY, 500, 60);
-            this.ctx.strokeStyle = '#654321';
-            this.ctx.lineWidth = 4;
-            this.ctx.strokeRect(signX, signY, 500, 60);
-            
-            this.ctx.fillStyle = '#FFD700';
-            this.ctx.font = 'bold 28px Poppins';
-            this.ctx.textAlign = 'center';
-            this.ctx.fillText("Welcome to Mayowa's Home!", signX + 250, signY + 40);
-            
             const boardX = sectionX + 100;
-            const boardY = 150;
-            const boardWidth = 600;
-            const boardHeight = 320;
+            const boardY = 80;
+            const boardWidth = Math.min(700, this.canvas.width - 200);
+            const boardHeight = this.canvas.height - 250;
             
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.98)';
+            // Board shadow
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            this.ctx.fillRect(boardX + 5, boardY + 5, boardWidth, boardHeight);
+            
+            // Board background
+            const boardGradient = this.ctx.createLinearGradient(boardX, boardY, boardX, boardY + boardHeight);
+            boardGradient.addColorStop(0, '#FFFFFF');
+            boardGradient.addColorStop(1, '#F5F5F5');
+            this.ctx.fillStyle = boardGradient;
             this.ctx.fillRect(boardX, boardY, boardWidth, boardHeight);
+            
+            // Border
             this.ctx.strokeStyle = '#667eea';
-            this.ctx.lineWidth = 5;
+            this.ctx.lineWidth = 4;
             this.ctx.strokeRect(boardX, boardY, boardWidth, boardHeight);
             
+            // Title
             this.ctx.fillStyle = '#667eea';
-            this.ctx.font = 'bold 24px Poppins';
+            this.ctx.font = 'bold 32px Poppins';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('About Me', boardX + boardWidth / 2, boardY + 35);
+            this.ctx.fillText("Welcome to Mayowa's Home!", boardX + boardWidth / 2, boardY + 50);
             
+            this.ctx.font = 'bold 24px Poppins';
+            this.ctx.fillText('About Me', boardX + boardWidth / 2, boardY + 90);
+            
+            // Content
             this.ctx.fillStyle = '#333';
-            this.ctx.font = '13px Poppins';
+            this.ctx.font = '15px Poppins';
             this.ctx.textAlign = 'left';
             const lines = [
                 'Hello, my name is Mayowa. I am 17 years old and I am from Avon, Indiana.',
@@ -193,34 +271,34 @@ class SceneManager {
             ];
             
             lines.forEach((line, i) => {
-                this.ctx.fillText(line, boardX + 20, boardY + 70 + i * 16);
+                this.ctx.fillText(line, boardX + 30, boardY + 130 + i * 22);
             });
             
-            const btnX = boardX + boardWidth / 2 - 100;
-            const btnY = boardY + boardHeight - 50;
-            const btnWidth = 200;
-            const btnHeight = 35;
+            // Contact button with gradient
+            const btnX = boardX + boardWidth / 2 - 120;
+            const btnY = boardY + boardHeight - 60;
+            const btnWidth = 240;
+            const btnHeight = 45;
             
-            this.ctx.fillStyle = '#667eea';
+            const btnGradient = this.ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnHeight);
+            btnGradient.addColorStop(0, '#667eea');
+            btnGradient.addColorStop(1, '#764ba2');
+            this.ctx.fillStyle = btnGradient;
             this.ctx.fillRect(btnX, btnY, btnWidth, btnHeight);
+            
             this.ctx.fillStyle = '#FFF';
-            this.ctx.font = 'bold 14px Poppins';
+            this.ctx.font = 'bold 16px Poppins';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('📧 Send Me a Message', btnX + btnWidth / 2, btnY + 22);
+            this.ctx.fillText('📧 Send Me a Message', btnX + btnWidth / 2, btnY + 28);
             
             if (!window.contactButton) {
                 window.contactButton = {
-                    worldX: this.sections.aboutMe.x + 100 + boardWidth / 2 - 100,
+                    worldX: this.sections.aboutMe.x + 100 + boardWidth / 2 - 120,
                     y: btnY,
                     width: btnWidth,
                     height: btnHeight
                 };
             }
-            
-            this.ctx.fillStyle = '#666';
-            this.ctx.font = 'bold 16px Poppins';
-            this.ctx.textAlign = 'center';
-            this.ctx.fillText('→ Move right to see my games! →', sectionX + 400, boardY + boardHeight + 50);
         }
     }
 
@@ -229,9 +307,9 @@ class SceneManager {
         
         if (sectionX > -this.sections.games.width && sectionX < this.canvas.width) {
             this.ctx.fillStyle = '#333';
-            this.ctx.font = 'bold 36px Poppins';
+            this.ctx.font = 'bold 48px Poppins';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('My Games', sectionX + 400, 100);
+            this.ctx.fillText('My Games', sectionX + this.canvas.width / 2, 100);
             
             const games = [
                 { name: 'Flappy Bird', icon: '🐦', color: '#87CEEB' },
@@ -241,10 +319,10 @@ class SceneManager {
                 { name: 'Snake Race', icon: '🐍', color: '#98FB98' }
             ];
             
-            const cardWidth = 220;
-            const cardHeight = 160;
-            const gap = 30;
-            const startX = sectionX + 100;
+            const cardWidth = 260;
+            const cardHeight = 200;
+            const gap = 40;
+            const startX = sectionX + 150;
             const startY = 150;
             
             games.forEach((game, index) => {
@@ -253,32 +331,39 @@ class SceneManager {
                 const x = startX + col * (cardWidth + gap);
                 const y = startY + row * (cardHeight + gap);
                 
+                // Card shadow
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+                this.ctx.fillRect(x + 4, y + 4, cardWidth, cardHeight);
+                
+                // Card background
                 this.ctx.fillStyle = '#fff';
-                this.ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-                this.ctx.shadowBlur = 10;
-                this.ctx.shadowOffsetX = 0;
-                this.ctx.shadowOffsetY = 4;
                 this.ctx.fillRect(x, y, cardWidth, cardHeight);
-                this.ctx.shadowBlur = 0;
                 
-                this.ctx.fillStyle = game.color;
-                this.ctx.fillRect(x, y, cardWidth, 100);
+                // Thumbnail with gradient
+                const thumbGradient = this.ctx.createLinearGradient(x, y, x, y + 130);
+                thumbGradient.addColorStop(0, game.color);
+                thumbGradient.addColorStop(1, this.adjustColor(game.color, -30));
+                this.ctx.fillStyle = thumbGradient;
+                this.ctx.fillRect(x, y, cardWidth, 130);
                 
-                this.ctx.font = '48px Arial';
+                // Icon
+                this.ctx.font = '60px Arial';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText(game.icon, x + cardWidth / 2, y + 65);
+                this.ctx.fillText(game.icon, x + cardWidth / 2, y + 85);
                 
+                // Title
                 this.ctx.fillStyle = '#333';
-                this.ctx.font = 'bold 18px Poppins';
-                this.ctx.fillText(game.name, x + cardWidth / 2, y + 130);
+                this.ctx.font = 'bold 20px Poppins';
+                this.ctx.fillText(game.name, x + cardWidth / 2, y + 160);
                 
+                // Play hint
                 this.ctx.fillStyle = '#666';
-                this.ctx.font = '12px Poppins';
-                this.ctx.fillText('Click to play', x + cardWidth / 2, y + 150);
+                this.ctx.font = '14px Poppins';
+                this.ctx.fillText('Click to play', x + cardWidth / 2, y + 180);
                 
                 if (!window.gameCards) window.gameCards = [];
                 window.gameCards[index] = {
-                    worldX: this.sections.games.x + 100 + col * (cardWidth + gap),
+                    worldX: this.sections.games.x + 150 + col * (cardWidth + gap),
                     y: y,
                     width: cardWidth,
                     height: cardHeight,
@@ -287,34 +372,39 @@ class SceneManager {
             });
         }
     }
+
+    adjustColor(color, amount) {
+        const hex = color.replace('#', '');
+        const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
+        const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
+        const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
+        return `rgb(${r}, ${g}, ${b})`;
+    }
 }
 
 class Character {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
-        this.x = 150;
+        this.x = canvas.width / 2;
         this.y = canvas.height - 180;
-        this.width = 60;
-        this.height = 90;
+        this.width = 48;
+        this.height = 64;
         this.frame = 0;
         this.frameCount = 0;
         this.isWalking = false;
         this.facingRight = true;
-        this.walkSpeed = 5;
+        this.walkSpeed = 6;
         this.velocity = 0;
-        
-        this.minX = 50;
-        this.maxX = canvas.width - 50;
         
         this.phrases = [
             "Hi there! 👋",
-            "Use Arrow Keys to move!",
+            "Use Arrow Keys!",
             "Let's explore! 🎮",
             "Check out my work!",
-            "I love coding! 💻",
-            "Move right for games!",
-            "Move left for about me!",
+            "Move around!",
+            "Games to the right!",
+            "About me to the left!",
             "Keep exploring!"
         ];
         
@@ -326,7 +416,7 @@ class Character {
         
         window.addEventListener('keydown', (e) => {
             this.keys[e.code] = true;
-            if(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
+            if(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) {
                 e.preventDefault();
             }
         });
@@ -349,7 +439,8 @@ class Character {
     }
 
     isPointInCharacter(x, y) {
-        return x >= this.x - 30 && x <= this.x + 30 && y >= this.y - 90 && y <= this.y + 10;
+        return x >= this.x - this.width / 2 && x <= this.x + this.width / 2 && 
+               y >= this.y - this.height && y <= this.y;
     }
 
     onCharacterClick() {
@@ -361,7 +452,7 @@ class Character {
         }
         this.showSpeech(this.phrases[Math.floor(Math.random() * this.phrases.length)]);
         if (this.velocity === 0) {
-            this.velocity = -12;
+            this.velocity = -15;
         }
     }
 
@@ -387,7 +478,6 @@ class Character {
         this.isWalking = false;
         
         if (this.keys['ArrowLeft'] || this.keys['KeyA']) {
-            this.x -= this.walkSpeed;
             this.facingRight = false;
             this.isWalking = true;
             if (window.sceneManager) {
@@ -396,7 +486,6 @@ class Character {
         }
         
         if (this.keys['ArrowRight'] || this.keys['KeyD']) {
-            this.x += this.walkSpeed;
             this.facingRight = true;
             this.isWalking = true;
             if (window.sceneManager) {
@@ -404,13 +493,11 @@ class Character {
             }
         }
         
-        this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
-        
         if ((this.keys['ArrowUp'] || this.keys['KeyW'] || this.keys['Space']) && this.velocity === 0) {
-            this.velocity = -12;
+            this.velocity = -15;
         }
         
-        this.velocity += 0.5;
+        this.velocity += 0.6;
         this.y += this.velocity;
         
         const groundY = this.canvas.height - 180;
@@ -421,7 +508,7 @@ class Character {
         
         if (this.isWalking) {
             this.frameCount++;
-            if (this.frameCount % 8 === 0) {
+            if (this.frameCount % 6 === 0) {
                 this.frame = (this.frame + 1) % 4;
             }
         } else {
@@ -439,79 +526,65 @@ class Character {
         }
         
         // Shadow
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
         this.ctx.beginPath();
-        this.ctx.ellipse(this.x, this.y + 45, 20, 6, 0, 0, Math.PI * 2);
+        this.ctx.ellipse(this.x, this.y + 2, 18, 5, 0, 0, Math.PI * 2);
         this.ctx.fill();
         
-        const legOffset = this.isWalking ? Math.sin(this.frame * Math.PI / 2) * 5 : 0;
+        // Pixel art style character
+        const px = 4; // Pixel size
+        const legMove = this.isWalking ? Math.sin(this.frame * Math.PI / 2) * 2 : 0;
         
-        // Legs
-        this.ctx.fillStyle = '#1a1a1a';
-        this.ctx.fillRect(this.x - 12, this.y + 20, 10, 25);
-        this.ctx.fillRect(this.x + 2, this.y + 20 + legOffset, 10, 25 - Math.abs(legOffset));
+        // Legs (dark blue pants)
+        this.ctx.fillStyle = '#1a1a2e';
+        this.ctx.fillRect(this.x - 6*px, this.y - 4*px, 3*px, 4*px); // Left leg
+        this.ctx.fillRect(this.x + 3*px, this.y - 4*px + legMove, 3*px, 4*px); // Right leg
         
-        // Shoes
+        // Shoes (black)
         this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(this.x - 14, this.y + 43, 14, 6);
-        this.ctx.fillRect(this.x + 2, this.y + 43 + legOffset, 14, 6);
+        this.ctx.fillRect(this.x - 7*px, this.y - px, 4*px, px);
+        this.ctx.fillRect(this.x + 3*px, this.y - px + legMove, 4*px, px);
         
-        // Body
+        // Body (blue shirt)
         this.ctx.fillStyle = '#4169E1';
-        this.ctx.fillRect(this.x - 18, this.y - 10, 36, 30);
+        this.ctx.fillRect(this.x - 6*px, this.y - 10*px, 12*px, 6*px);
         
         // Arms
-        const armSwing = this.isWalking ? Math.sin(this.frame * Math.PI / 2) * 8 : 0;
-        this.ctx.fillStyle = '#8B4513';
-        this.ctx.fillRect(this.x - 25, this.y - 8 + armSwing, 8, 28);
-        this.ctx.fillRect(this.x + 17, this.y - 8 - armSwing, 8, 28);
+        const armSwing = this.isWalking ? Math.sin(this.frame * Math.PI / 2) * px : 0;
+        this.ctx.fillStyle = '#8B4513'; // Skin tone
+        this.ctx.fillRect(this.x - 8*px, this.y - 9*px + armSwing, 2*px, 5*px); // Left arm
+        this.ctx.fillRect(this.x + 6*px, this.y - 9*px - armSwing, 2*px, 5*px); // Right arm
         
         // Neck
         this.ctx.fillStyle = '#8B4513';
-        this.ctx.fillRect(this.x - 6, this.y - 18, 12, 8);
+        this.ctx.fillRect(this.x - 2*px, this.y - 11*px, 4*px, 2*px);
         
-        // Head
+        // Head (round)
         this.ctx.fillStyle = '#8B4513';
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y - 35, 18, 0, Math.PI * 2);
-        this.ctx.fill();
+        this.ctx.fillRect(this.x - 4*px, this.y - 15*px, 8*px, 6*px);
+        this.ctx.fillRect(this.x - 5*px, this.y - 14*px, 10*px, 4*px);
         
-        // Hair (afro)
+        // Hair (afro - black)
         this.ctx.fillStyle = '#000';
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y - 38, 20, Math.PI, 0, false);
-        this.ctx.fill();
+        this.ctx.fillRect(this.x - 5*px, this.y - 17*px, 10*px, 4*px);
+        this.ctx.fillRect(this.x - 6*px, this.y - 16*px, 12*px, 3*px);
+        this.ctx.fillRect(this.x - 6*px, this.y - 15*px, 2*px, 2*px);
+        this.ctx.fillRect(this.x + 4*px, this.y - 15*px, 2*px, 2*px);
         
-        this.ctx.beginPath();
-        this.ctx.arc(this.x - 16, this.y - 35, 12, 0, Math.PI * 2);
-        this.ctx.arc(this.x + 16, this.y - 35, 12, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Eyes
+        // Eyes (white with black pupils)
         this.ctx.fillStyle = '#FFF';
-        this.ctx.beginPath();
-        this.ctx.arc(this.x - 7, this.y - 37, 4, 0, Math.PI * 2);
-        this.ctx.arc(this.x + 7, this.y - 37, 4, 0, Math.PI * 2);
-        this.ctx.fill();
+        this.ctx.fillRect(this.x - 3*px, this.y - 14*px, 2*px, 2*px);
+        this.ctx.fillRect(this.x + px, this.y - 14*px, 2*px, 2*px);
         
-        // Pupils
         this.ctx.fillStyle = '#000';
-        this.ctx.beginPath();
-        const pupilOffsetX = this.facingRight ? 1 : -1;
-        this.ctx.arc(this.x - 7 + pupilOffsetX, this.y - 37, 2, 0, Math.PI * 2);
-        this.ctx.arc(this.x + 7 + pupilOffsetX, this.y - 37, 2, 0, Math.PI * 2);
-        this.ctx.fill();
+        const pupilDir = this.facingRight ? 1 : 0;
+        this.ctx.fillRect(this.x - 3*px + pupilDir, this.y - 14*px, px, px);
+        this.ctx.fillRect(this.x + px + pupilDir, this.y - 14*px, px, px);
         
         // Smile
-        this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y - 30, 8, 0.2, Math.PI - 0.2);
-        this.ctx.stroke();
-        
-        // Nose
         this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(this.x + 2, this.y - 33, 2, 4);
+        this.ctx.fillRect(this.x - 2*px, this.y - 11*px, px, px);
+        this.ctx.fillRect(this.x + px, this.y - 11*px, px, px);
         
         this.ctx.restore();
     }
