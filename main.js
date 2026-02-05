@@ -62,6 +62,23 @@ canvas.addEventListener('click', (e) => {
     
     console.log('Canvas clicked at:', clickX, clickY);
     
+    // Check glowing About Me button
+    if (window.aboutMeButton) {
+        const btnScreenX = window.aboutMeButton.worldX - sceneManager.cameraX;
+        
+        if (clickX >= btnScreenX && clickX <= btnScreenX + window.aboutMeButton.width &&
+            clickY >= window.aboutMeButton.y && clickY <= window.aboutMeButton.y + window.aboutMeButton.height) {
+            
+            console.log('About Me button clicked - showing info!');
+            // Could open a modal or do something special
+            if (window.audioManager) {
+                audioManager.play('achievement');
+            }
+            alert('Welcome! This is the About Me section. Read about Mayowa above!');
+            return;
+        }
+    }
+    
     // Check contact button
     if (window.contactButton) {
         const btnScreenX = window.contactButton.worldX - sceneManager.cameraX;
