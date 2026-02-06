@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mayowa's Realistic Room</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+            background: #1a1a2a;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #2a2a3a;
+        }
+
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 1000;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+        }
+
+        #controls h3 {
+            margin: 0 0 12px 0;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        #controls p {
+            margin: 6px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        #controls kbd {
+            background: #667eea;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        #sectionIndicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(102, 126, 234, 0.95);
+            color: white;
+            padding: 25px 50px;
+            border-radius: 20px;
+            font-size: 32px;
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.4s ease;
+            pointer-events: none;
+            z-index: 2000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        #sectionIndicator.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #speechBubble {
+            position: fixed;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 20px;
+            padding: 18px 25px;
+            font-size: 17px;
+            max-width: 320px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.4);
+            z-index: 1500;
+            transform: translate(-50%, -100%);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        #speechBubble::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 12px solid white;
+        }
+
+        #speechBubble.hidden {
+            opacity: 0;
+            display: none;
+        }
+
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            z-index: 3000;
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>Loading Realistic Room...</p>
+    </div>
+
+    <div id="controls">
+        <h3>🎮 Controls</h3>
+        <p><kbd>←</kbd><kbd>→</kbd> Walk Left/Right</p>
+        <p><kbd>Space</kbd> Jump</p>
+        <p><kbd>🖱️</kbd> Click Character</p>
+    </div>
+
+    <div id="sectionIndicator" class="hidden"></div>
+    <div id="speechBubble" class="hidden">
+        <span id="speechText"></span>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="character.js"></script>
+    
+    <script>
+        console.log('🎬 Initializing Realistic Room...');
+        
+        // Check if classes loaded
+        if (typeof SceneManager === 'undefined') {
+            document.getElementById('loading').innerHTML = 
+                '<p style="color: red;">❌ Error: SceneManager not loaded!</p>' +
+                '<p style="font-size: 16px; margin-top: 10px;">Make sure character.js is in the same folder!</p>';
+            throw new Error('SceneManager class not found');
+        }
+        
+        if (typeof Character === 'undefined') {
+            document.getElementById('loading').innerHTML = 
+                '<p style="color: red;">❌ Error: Character not loaded!</p>' +
+                '<p style="font-size: 16px; margin-top: 10px;">Make sure character.js is in the same folder!</p>';
+            throw new Error('Character class not found');
+        }
+        
+        console.log('✅ Classes loaded successfully!');
+        
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            console.log('Canvas resized to:', canvas.width, 'x', canvas.height);
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Placeholder managers
+        window.achievementSystem = null;
+        window.audioManager = null;
+
+        try {
+            console.log('Creating SceneManager...');
+            const sceneManager = new SceneManager(canvas);
+            console.log('✅ SceneManager created!');
+            
+            console.log('Creating Character...');
+            const character = new Character(canvas);
+            console.log('✅ Character created!');
+            
+            // Make global
+            window.sceneManager = sceneManager;
+            window.character = character;
+            
+            // Hide loading
+            document.getElementById('loading').style.display = 'none';
+            console.log('🎉 Initialization complete!');
+            
+            // Animation loop
+            let frameCount = 0;
+            function animate() {
+                try {
+                    frameCount++;
+                    
+                    // Clear
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Update
+                    sceneManager.update();
+                    
+                    // Draw room
+                    sceneManager.drawRealisticBackground();
+                    sceneManager.drawRealisticFloor();
+                    sceneManager.drawRealisticWindow(canvas.height - 200);
+                    sceneManager.drawRealisticBed(canvas.height - 200);
+                    sceneManager.drawRealisticDesk(canvas.height - 200);
+                    sceneManager.drawRealisticBookshelf();
+                    sceneManager.drawRealisticPosters();
+                    sceneManager.drawRealisticLamp(canvas.height - 200);
+                    
+                    // Draw sections
+                    sceneManager.drawSections();
+                    
+                    // Character
+                    character.update();
+                    character.draw();
+                    
+                    requestAnimationFrame(animate);
+                } catch (error) {
+                    console.error('❌ Animation error at frame', frameCount, ':', error);
+                    console.error(error.stack);
+                }
+            }
+            
+            console.log('🎬 Starting animation loop...');
+            animate();
+            
+        } catch (error) {
+            console.error('❌ Fatal initialization error:', error);
+            console.error(error.stack);
+            document.getElementById('loading').innerHTML = 
+                `<p style="color: red;">❌ Error: ${error.message}</p>` +
+                '<p style="font-size: 14px; margin-top: 10px;">Check browser console (F12) for details</p>';
+        }
+    </script>
+</body>
+</html>

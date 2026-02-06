@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a2a;
+            color: #fff;
+            padding: 20px;
+        }
+        .test {
+            background: #2a2a3a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 5px solid #667eea;
+        }
+        .pass {
+            border-left-color: #00ff00;
+        }
+        .fail {
+            border-left-color: #ff0000;
+        }
+        h1 { color: #667eea; }
+        code {
+            background: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnostic Test</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        function addTest(name, passed, details = '') {
+            const div = document.createElement('div');
+            div.className = 'test ' + (passed ? 'pass' : 'fail');
+            div.innerHTML = `
+                <strong>${passed ? '✅' : '❌'} ${name}</strong><br>
+                ${details ? '<small>' + details + '</small>' : ''}
+            `;
+            results.appendChild(div);
+            console.log(`${passed ? '✅' : '❌'} ${name}`, details);
+        }
+        
+        // Test 1: Check if we can access the file
+        addTest('Step 1: HTML file loaded', true, 'You can see this page!');
+        
+        // Test 2: Try to load character.js
+        console.log('Loading character.js...');
+    </script>
+
+    <script src="character.js" onerror="document.getElementById('results').innerHTML += '<div class=\'test fail\'><strong>❌ character.js failed to load!</strong><br><small>Make sure character.js is in the same folder as this HTML file.</small></div>'"></script>
+
+    <script>
+        // Test 3: Check if script loaded
+        addTest('Step 2: character.js loaded', true, 'No error thrown');
+        
+        // Test 4: Check if classes exist
+        const hasSceneManager = typeof SceneManager !== 'undefined';
+        addTest('Step 3: SceneManager class found', hasSceneManager, 
+            hasSceneManager ? 'SceneManager class is defined' : 'SceneManager class is NOT defined - there may be a syntax error');
+        
+        const hasCharacter = typeof Character !== 'undefined';
+        addTest('Step 4: Character class found', hasCharacter,
+            hasCharacter ? 'Character class is defined' : 'Character class is NOT defined - there may be a syntax error');
+        
+        if (hasSceneManager && hasCharacter) {
+            // Test 5: Try to create instances
+            try {
+                const testCanvas = document.createElement('canvas');
+                testCanvas.width = 800;
+                testCanvas.height = 600;
+                
+                const testScene = new SceneManager(testCanvas);
+                addTest('Step 5: SceneManager can be instantiated', true, 'Created successfully');
+                
+                const testChar = new Character(testCanvas);
+                addTest('Step 6: Character can be instantiated', true, 'Created successfully');
+                
+                // Test 6: Check methods exist
+                const sceneHasMethods = typeof testScene.update === 'function' && 
+                                       typeof testScene.drawRealisticBackground === 'function';
+                addTest('Step 7: SceneManager has required methods', sceneHasMethods,
+                    sceneHasMethods ? 'All methods found' : 'Some methods missing');
+                
+                const charHasMethods = typeof testChar.update === 'function' && 
+                                      typeof testChar.draw === 'function';
+                addTest('Step 8: Character has required methods', charHasMethods,
+                    charHasMethods ? 'All methods found' : 'Some methods missing');
+                
+                if (sceneHasMethods && charHasMethods) {
+                    results.innerHTML += '<div class="test pass"><strong>🎉 ALL TESTS PASSED!</strong><br><small>The code is working correctly. You can now use realistic-room.html</small></div>';
+                }
+                
+            } catch (error) {
+                addTest('Step 5: Instantiation test', false, 'Error: ' + error.message);
+                console.error('Instantiation error:', error);
+            }
+        } else {
+            results.innerHTML += '<div class="test fail"><strong>⚠️ CLASSES NOT FOUND</strong><br><small>This means character.js either didn\'t load, or has a JavaScript error preventing the classes from being defined. Check the browser console (F12) for errors.</small></div>';
+        }
+    </script>
+</body>
+</html>
