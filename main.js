@@ -345,17 +345,32 @@ function animate() {
     try {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        sceneManager.drawBackground();
-        sceneManager.drawGround();
-        sceneManager.drawRoomElements();
+        // Update scene
+        sceneManager.update();
+        
+        // Draw realistic room
+        sceneManager.drawRealisticBackground();
+        sceneManager.drawRealisticFloor();
+        
+        // Draw room elements
+        sceneManager.drawRealisticWindow();
+        sceneManager.drawRealisticBed(canvas.height - 200);
+        sceneManager.drawRealisticDesk(canvas.height - 200);
+        sceneManager.drawRealisticBookshelf();
+        sceneManager.drawRealisticPosters();
+        sceneManager.drawRealisticLamp(canvas.height - 200);
+        
+        // Draw sections (About Me, Games panels)
         sceneManager.drawSections();
         
+        // Update and draw character
         character.update();
         character.draw();
         
         animationId = requestAnimationFrame(animate);
     } catch (error) {
         console.error('Animation error:', error);
+        console.error(error.stack);
     }
 }
 
