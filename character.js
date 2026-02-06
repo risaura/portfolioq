@@ -1142,7 +1142,7 @@ class SceneManager {
             const y = shelfY + i * 56;
             
             // Shelf plank
-            this.ctx.fillStyle = this.lerpColor('#4a2a1a', '#2a1a0a', this.nightTransition * 0.5));
+            this.ctx.fillStyle = this.lerpColor('#4a2a1a', '#2a1a0a', this.nightTransition * 0.5);
             this.ctx.fillRect(shelfX, y, shelfW, 10);
             
             // Shelf highlight
